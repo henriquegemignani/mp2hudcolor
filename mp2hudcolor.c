@@ -37,47 +37,18 @@ static uint32_t _swap_endianess_u32(uint8_t* data)
     return *((uint32_t*)four);
 }
 
-int main(int argc, char *argv[])
+void mp2hudcolor(char* input_filename, char* output_filename, float r, float g, float b)
 {
     static uint8_t buff[NTWK_FILE_SIZE];
-
-    // Parse input
-    if (argc != 6)
-    {
-        _usage();
-        return -1;
-    }
-
-    float r = atof(argv[3]);
-    if (r < 0.00001 || r > 1.00001)
-    {
-        _usage();
-        return -1;
-    }
-
-    float g = atof(argv[4]);
-    if (g < 0.00001 || g > 1.00001)
-    {
-        _usage();
-        return -1;
-    }
-
-    float b = atof(argv[5]);
-    if (b < 0.00001 || b > 1.00001)
-    {
-        _usage();
-        return -1;
-    }
-
     float rgb_max = r > g ? r : g;
     rgb_max = b > rgb_max ? b : rgb_max;
 
     // Open input file
-    FILE *src = fopen(argv[1], "rb");
+    FILE *src = fopen(input_filename, "rb");
     if (src == NULL)
     {
-        printf("Error - Failed to open '%s' for reading\n", argv[1]);
-        return -1;
+        printf("Error - Failed to open '%s' for reading\n", input_filename);
+        return;
     }
 
     // Check file size
@@ -88,7 +59,7 @@ int main(int argc, char *argv[])
         if (size != NTWK_FILE_SIZE)
         {
             printf("Error - Unexpected input file size - %ld\n", size);
-            return -1;
+            return;
         }
     }
 
@@ -98,12 +69,12 @@ int main(int argc, char *argv[])
     if (result != 1)
     {
         printf("Error - Failed to read input file\n");
-        return -1;
+        return;
     }
     if ((buff[TWGC_MAGIC_OFFSET] != 'T') || (buff[TWGC_MAGIC_OFFSET + 1] != 'W') || (buff[TWGC_MAGIC_OFFSET + 2] != 'G') || (buff[TWGC_MAGIC_OFFSET + 3] != 'C'))
     {
         printf("Error - Unexpected Magic Bytes\n");
-        return -1;
+        return;
     }
 
     // Modify file in RAM
@@ -152,14 +123,47 @@ int main(int argc, char *argv[])
     }
 
     // Write back
-    FILE *dst = fopen(argv[2], "w");
+    FILE *dst = fopen(output_filename, "w");
     if (dst == NULL)
     {
-        printf("Error - Failed to open '%s' for writing\n", argv[2]);
-        return -1;
+        printf("Error - Failed to open '%s' for writing\n", output_filename);
+        return;
     }
     fseek(dst, 0, SEEK_SET);
     fwrite(buff, NTWK_FILE_SIZE, 1, dst);
     fclose(dst);
+}
+
+int main(int argc, char *argv[])
+{
+    // Parse input
+    if (argc != 6)
+    {
+        _usage();
+        return -1;
+    }
+
+    float r = atof(argv[3]);
+    if (r < 0.00001 || r > 1.00001)
+    {
+        _usage();
+        return -1;
+    }
+
+    float g = atof(argv[4]);
+    if (g < 0.00001 || g > 1.00001)
+    {
+        _usage();
+        return -1;
+    }
+
+    float b = atof(argv[5]);
+    if (b < 0.00001 || b > 1.00001)
+    {
+        _usage();
+        return -1;
+    }
+
+    mp2hudcolor(argv[1], argv[2], r, g, b);
     return 0;
 }
