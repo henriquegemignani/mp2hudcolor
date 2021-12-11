@@ -8,9 +8,9 @@ Build instructions all are written for Linux, but should adapt fine for Windows.
 ## Usage
 ```sh
 > pip install mp2hudcolor
-> python3
+> python
 >>> import mp2hudcolor
->>> mp2hudcolor.mp2hudcolor_c("Standard.ntwk", "Standard-out.nkwk", 1.0, 0.5, 0.25) # (input, output, red, green, blue)
+>>> mp2hudcolor.mp2hudcolor_c("Standard.ntwk", "Standard-out.ntwk", 1.0, 0.5, 0.25) # (input, output, red, green, blue)
 ```
 
 ## Build (Cython Package)
