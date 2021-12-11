@@ -22,6 +22,7 @@ tools/build-standalone.sh
 # Tested with python3.10
 apt install python3.X-venv
 apt install python3.X-dev
+apt install patchelf
 ```
 
 ## Build (Cython Package)
