@@ -14,3 +14,18 @@ mp2hudcolor Standard.ntwk Standard-out.nkwk 1.0 0.5 0.25
 ```sh
 tools/build-standalone.sh
 ```
+
+# Cython Package
+
+## Requirements
+```sh
+# Tested with python3.10
+apt install python3.X-venv
+apt install python3.X-dev
+```
+
+## Build (Cython Package)
+```
+tools/venv.sh
+tools/build-cython.sh
+```
