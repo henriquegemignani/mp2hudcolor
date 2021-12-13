@@ -24,7 +24,7 @@ tools/build-cython.sh
 ## Usage
 ```sh
 # mp2hudcolor <input> <output> <red> <green> <blue>
-mp2hudcolor Standard.ntwk Standard-out.nkwk 1.0 0.5 0.25
+mp2hudcolor Standard.ntwk Standard-out.ntwk 1.0 0.5 0.25
 ```
 ## Build
 ```sh
