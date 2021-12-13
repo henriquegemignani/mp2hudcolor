@@ -37,9 +37,29 @@ static uint32_t _swap_endianess_u32(uint8_t* data)
     return *((uint32_t*)four);
 }
 
+static uint16_t _swap_endianess_u16(uint8_t* data)
+{
+    uint8_t two[2];
+    two[0] = data[1];
+    two[1] = data[0];
+    return *((uint16_t*)two);
+}
+
 void mp2hudcolor(char* input_filename, char* output_filename, float r, float g, float b)
 {
     static uint8_t buff[NTWK_MAX_FILE_SIZE];
+
+    // Check input
+    if (
+        r > 1.00001 || r < -0.00001
+        || g > 1.00001 || g < -0.00001
+        || b > 1.00001 || b < -0.00001
+    )
+    {
+        printf("Error - Input color must be 0.0 - 1.0\n");
+        return;
+    }
+
     float rgb_max = r > g ? r : g;
     rgb_max = b > rgb_max ? b : rgb_max;
 
@@ -103,14 +123,40 @@ void mp2hudcolor(char* input_filename, char* output_filename, float r, float g, 
             {
                 continue;
             }
+
+            // if (found)
+            // {
+            //     printf("Warning - Found second instance of tweak ID 0x%X\n", TWGC_IDS[i]);
+            // }
+
             found = 1;
 
-            data = data + 6; // advance length of ID + u16 size
+            data = data + 4; // advance length of uint32_t size
+            uint16_t size = _swap_endianess_u16(data);
+            if (size != 0x10)
+            {
+                // printf("Warning - Unexpected RGBA size %d (tweak ID 0x%X)\n", size, TWGC_IDS[i]);
+                continue;
+            }
+
+            data = data + 2; // advance length of uint16_t size
             float old_r = _swap_endianess_float(data);
             float old_g = _swap_endianess_float(data + 4);
             float old_b = _swap_endianess_float(data + 8);
-            // float old_a = _swap_endianess_float(data + 12);
-            
+            float old_a = _swap_endianess_float(data + 12);
+
+            // Check for non-color
+            if (
+                old_r > 1.00001 || old_r < -0.00001
+                || old_g > 1.00001 || old_g < -0.00001
+                || old_b > 1.00001 || old_b < -0.00001
+                || old_a > 1.00001 || old_a < -0.00001
+            )
+            {
+                printf("Warning - Unexpected rgba value (%f, %f, %f, %f)\n", old_r, old_g, old_b, old_a);
+                continue;
+            }
+
             // Skip black/white/gray
             if (
                 old_r-old_g > -0.1 && old_r-old_g < 0.1
@@ -165,21 +211,21 @@ int main(int argc, char *argv[])
     }
 
     float r = atof(argv[3]);
-    if (r < 0.00001 || r > 1.00001)
+    if (r < -0.00001 || r > 1.00001)
     {
         _usage();
         return -1;
     }
 
     float g = atof(argv[4]);
-    if (g < 0.00001 || g > 1.00001)
+    if (g < -0.00001 || g > 1.00001)
     {
         _usage();
         return -1;
     }
 
     float b = atof(argv[5]);
-    if (b < 0.00001 || b > 1.00001)
+    if (b < -0.00001 || b > 1.00001)
     {
         _usage();
         return -1;
