@@ -11,11 +11,13 @@ jobs:
     - uses: actions/setup-python@v2
     - name: Install dependencies
       run: |
+        chmod 777 ./tools/venv.sh
         ./tools/venv.sh
     - name: Build and publish
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
+        chmod 777 ./tools/build-wheel.sh
         ./tools/build-wheel.sh
         twine upload dist/*
