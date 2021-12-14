@@ -17,9 +17,7 @@ jobs:
         pip install twine flake8
     - name: Pre-build
       run: |
-      echo "Building files..."
       python setup.py build_ext --inplace
-      echo "Building wheel..."
       python setup.py sdist bdist_wheel
     - name: Lint with flake8 for syntax errors
       run: |
