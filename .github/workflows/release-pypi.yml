@@ -29,6 +29,5 @@ jobs:
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      run: |
-        rm -f dist/*linux_x86_64.whl
-        twine upload dist/*
+      run: |      
+        twine upload dist/*.tar.gz dist/*.manylinux1_x86_64.whl
