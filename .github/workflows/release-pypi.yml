@@ -87,7 +87,7 @@ jobs:
       - name: build wheel
         run: |
           docker pull quay.io/pypa/manylinux2014_x86_64
-          docker run --rm -e PYTHON_VERSION=${{ matrix.python }} -v $(pwd):/host -w /host quay.io/pypa/manylinux2014_x86_64 ./tools/build-ci.sh
+          docker run --rm -e PYTHON_VERSION=${{ matrix.python }} -v $(pwd):/host -w /host quay.io/pypa/manylinux2014_x86_64 chmod 777 ./tools/build-ci.sh && ./tools/build-ci.sh
       
       - name: Store the packages
         uses: actions/upload-artifact@v2
