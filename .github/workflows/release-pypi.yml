@@ -43,19 +43,16 @@ jobs:
         run: python -m pip install --upgrade build pip pytest cython numpy wheel auditwheel
 
       - name: build wheel
-        run: python -m build --wheel
+        run: python -m pip install --upgrade cython numpy && python -m build --wheel
 
       - name: install built wheel
         run: python -m pip install dist/*
         shell: bash
 
-      - name: test
-        run: python -m pytest test
-
       - name: build sdist
         run: python -m build --sdist
         if: ${{ matrix.os == 'macos-latest' && matrix.python == '3.9' }}
-      
+
       - name: Store the packages
         uses: actions/upload-artifact@v2
         with:
