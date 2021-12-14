@@ -6,4 +6,4 @@ rm -rf $SCRIPT_DIR/../dist
 rm -rf $SCRIPT_DIR/../wheelhouse
 rm -f $SCRIPT_DIR/../src/mp2hudcolor_wrapper.c
 rm -f $SCRIPT_DIR/../*.so
-rm -f $SCRIPT_DIR/../*.egg-info
+rm -rf $SCRIPT_DIR/../*.egg-info

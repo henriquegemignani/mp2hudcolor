@@ -15,6 +15,3 @@ $PYTHON -m auditwheel repair $SCRIPT_DIR/../dist/*linux_x86_64.whl
 mv $SCRIPT_DIR/../wheelhouse/*.whl $SCRIPT_DIR/../dist
 rm -f $SCRIPT_DIR/../dist/*linux_x86_64.whl
 rm -rf wheelhouse
-
-echo "Uploading to PyPi..."
-$PYTHON -m twine upload --repository pypi dist/*

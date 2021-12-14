@@ -3,9 +3,9 @@ Sets a user-defined HUD color for Metroid Prime 2: Echoes. Values are stored as 
 
 Build instructions all are written for Linux, but should adapt fine for Windows.
 
-# Cython Package
+# Usage
 
-## Usage
+## Python Module
 ```sh
 > pip install mp2hudcolor
 > python
@@ -13,20 +13,22 @@ Build instructions all are written for Linux, but should adapt fine for Windows.
 >>> mp2hudcolor.mp2hudcolor_c("Standard.ntwk", "Standard-out.ntwk", 1.0, 0.5, 0.25) # (input, output, red, green, blue)
 ```
 
-## Build (Cython Package)
+## Standalone
+```sh
+# mp2hudcolor <input> <output> <red> <green> <blue>
+mp2hudcolor Standard.ntwk Standard-out.ntwk 1.0 0.5 0.25
+```
+
+# Build
+
+## Python
+
 ```
 tools/venv.sh
 tools/build-cython.sh
 ```
 
-# Standalone
-
-## Usage
-```sh
-# mp2hudcolor <input> <output> <red> <green> <blue>
-mp2hudcolor Standard.ntwk Standard-out.ntwk 1.0 0.5 0.25
-```
-## Build
+## Standalone
 ```sh
 tools/build-standalone.sh
 ```
