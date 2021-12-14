@@ -1,23 +1,14 @@
 from pathlib import Path
 from setuptools import setup, Extension
+from Cython.Distutils import build_ext
 
-try:
-    from Cython.Distutils import build_ext
-except ImportError:
-    USING_CYTHON = False
-else:
-    USING_CYTHON = True
-
-ext = 'pyx' if USING_CYTHON else 'c'
 src = [
-    'mp2hudcolor/mp2hudcolor_wrapper.' + ext
+    'mp2hudcolor/mp2hudcolor_wrapper.pyx'
 ]
 
 extensions = [
     Extension("mp2hudcolor", src)
 ]
-
-cmdclass = {'build_ext': build_ext} if USING_CYTHON else {}
 
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
@@ -38,6 +29,6 @@ setup(
         'numpy',
     ],
     ext_modules=extensions,
-    cmdclass=cmdclass,
+    cmdclass={'build_ext': build_ext},
     package_data={'mp2hudcolor': ['mp2hudcolor.c']}
 )

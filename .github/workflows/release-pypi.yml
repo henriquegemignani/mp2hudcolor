@@ -1,37 +1,122 @@
-name: Python package build and publish
+name: Python Package
 
-on: push
+on:
+  pull_request:
+  push:
+    branches:
+      - '*'
+    tags:
+      - '*'
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - 'macos-latest'
+          - 'windows-latest'
+        python:
+          - '3.6'
+          - '3.7'
+          - '3.8'
+          - '3.9'
+          - '3.10'
+
+    runs-on: ${{ matrix.os }}
+
+    name: ${{ matrix.os }} - Python ${{ matrix.python }}
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.8
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install twine flake8 cython numpy wheel
-    - name: Pre-build
-      run: |
-        python setup.py build_ext --inplace
-        python setup.py sdist bdist_wheel
-    - name: Lint with flake8 for syntax errors
-      run: |
-        pip install flake8
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Build manylinux Python wheels
-      uses: RalfG/python-wheels-manylinux-build@v0.4.2-manylinux2014_x86_64
-      with:
-        python-versions: 'cp36-cp36m cp37-cp37m'
-        build-requirements: 'cython numpy'
-    - name: Publish wheels to PyPI
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      run: |
-        twine upload dist/*.tar.gz dist/*-manylinux*.whl
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: 'recursive'
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+     
+      - name: Install Python packages
+        run: python -m pip install --upgrade build pip pytest
+
+      - name: build wheel
+        run: python -m build --wheel
+
+      - name: install built wheel
+        run: python -m pip install dist/*
+        shell: bash
+
+      - name: test
+        run: python -m pytest test
+
+      - name: build sdist
+        run: python -m build --sdist
+        if: ${{ matrix.os == 'macos-latest' && matrix.python == '3.9' }}
+      
+      - name: Store the packages
+        uses: actions/upload-artifact@v2
+        with:
+          name: python-package-distributions
+          path: dist
+
+  linux-build:
+    strategy:
+      fail-fast: false
+      matrix:
+        python:
+          - 'cp36-cp36m'
+          - 'cp37-cp37m'
+          - 'cp38-cp38'
+          - 'cp39-cp39'
+          - 'cp310-cp310'
+
+    runs-on: ubuntu-latest
+
+    name: Linux - Python ${{ matrix.python }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: 'recursive'
+
+      - name: build wheel
+        run: |
+          docker pull quay.io/pypa/manylinux2014_x86_64
+          docker run --rm -e PYTHON_VERSION=${{ matrix.python }} -v $(pwd):/host -w /host quay.io/pypa/manylinux2014_x86_64 ./ci-scripts/build.sh
+      
+      - name: Store the packages
+        uses: actions/upload-artifact@v2
+        with:
+          name: python-package-distributions
+          path: dist
+
+  pypi:
+    runs-on: 'ubuntu-latest'
+    needs:
+      - build
+      - linux-build
+
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v2
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish 📦 to TestPyPI
+        if: ${{ github.ref == 'refs/heads/master' }}
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
+      
+      - name: Publish 📦 to PyPI
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
