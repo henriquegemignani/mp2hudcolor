@@ -190,7 +190,7 @@ void mp2hudcolor(char* input_filename, char* output_filename, float r, float g, 
     }
 
     // Write back
-    FILE *dst = fopen(output_filename, "w");
+    FILE *dst = fopen(output_filename, "wb");
     if (dst == NULL)
     {
         printf("Error - Failed to open '%s' for writing\n", output_filename);
