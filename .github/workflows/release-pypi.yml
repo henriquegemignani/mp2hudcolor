@@ -84,7 +84,7 @@ jobs:
 
       - name: build wheel
         run: |
-          chmod 777 ./tools/build-ci.sh && ./tools/build-ci.sh PYTHON_VERSION=${{ matrix.python }}
+          chmod 777 ./tools/build-ci.sh && PYTHON_VERSION=${{ matrix.python }} ./tools/build-ci.sh
       
       - name: Store the packages
         uses: actions/upload-artifact@v2
