@@ -25,7 +25,6 @@ setup(
     license="MIT",
     packages=['mp2hudcolor'],
     install_requires=[
-        'cython',
     ],
     ext_modules=extensions,
     cmdclass={'build_ext': build_ext},
