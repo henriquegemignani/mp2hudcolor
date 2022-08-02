@@ -22,6 +22,7 @@ jobs:
           - '3.8'
           - '3.9'
           - '3.10'
+          - '3.11-dev'
 
     runs-on: ${{ matrix.os }}
 
@@ -29,32 +30,28 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
           submodules: 'recursive'
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python }}
+          python-version: "${{ matrix.python }}"
      
       - name: Install Python packages
-        run: python -m pip install --upgrade build pip cython wheel auditwheel
+        run: python -m pip install --upgrade build pip
 
       - name: build wheel
         run: python -m build --wheel
 
-      - name: install built wheel
-        run: python -m pip install dist/*
-        shell: bash
-
       - name: build sdist
         run: python -m build --sdist
-        if: ${{ matrix.os == 'macos-latest' && matrix.python == '3.9' }}
-
+        if: ${{ matrix.os == 'macos-latest' && matrix.python == '3.10' }}
+      
       - name: Store the packages
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: python-package-distributions
           path: dist
@@ -64,30 +61,41 @@ jobs:
       fail-fast: false
       matrix:
         python:
-          - 'cp36-cp36m'
           - 'cp37-cp37m'
           - 'cp38-cp38'
           - 'cp39-cp39'
           - 'cp310-cp310'
+          - 'cp311-cp311'
 
     runs-on: ubuntu-latest
     container: quay.io/pypa/manylinux2014_x86_64
-
-    name: Linux - Python ${{ matrix.python }}
+    name: Wheel for Linux (${{ matrix.python }})
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
           submodules: 'recursive'
 
+      - name: Avoid issues with Git's solution for CVE-2022-24765 breaking setuptools-scm
+        run: git config --global --add safe.directory $(pwd)
+
+      - run: /opt/python/${{ matrix.python }}/bin/python -m venv .venv
+     
+      - name: Install Python packages
+        run: .venv/bin/python -m pip install --upgrade build pip auditwheel
+
       - name: build wheel
+        run: .venv/bin/python -m build --wheel
+
+      - name: multilinux stuff
         run: |
-          chmod 777 ./tools/build-ci.sh && PYTHON_VERSION=${{ matrix.python }} ./tools/build-ci.sh
+          .venv/bin/python -m auditwheel repair --plat manylinux2014_x86_64 dist/*-linux_x86_64.whl -w dist
+          rm dist/*-linux_x86_64.whl
       
       - name: Store the packages
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: python-package-distributions
           path: dist
