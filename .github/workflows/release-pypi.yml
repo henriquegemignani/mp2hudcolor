@@ -16,28 +16,22 @@ jobs:
         os:
           - 'macos-latest'
           - 'windows-latest'
-        python:
-          - '3.8'
-          - '3.9'
-          - '3.10'
-          - '3.11'
-          - '3.12'
 
     runs-on: ${{ matrix.os }}
-    name: Wheel for ${{ matrix.os }} (${{ matrix.python }})
+    name: Wheel for ${{ matrix.os }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: 'recursive'
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "${{ matrix.python }}"
-     
+          python-version: "3.10"
+
       - name: Install Python packages
         run: python -m pip install --upgrade build pip
 
@@ -46,41 +40,28 @@ jobs:
 
       - name: build sdist
         run: python -m build --sdist
-        if: ${{ matrix.os == 'macos-latest' && matrix.python == '3.10' }}
-      
+        if: ${{ matrix.os == 'macos-latest' }}
+
       - name: Store the packages
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v7
         with:
-          name: python-package-distributions
+          name: python-package-distributions-${{ matrix.os }}
           path: dist
 
   linux-build:
-    strategy:
-      fail-fast: false
-      matrix:
-        python:
-          - 'cp38-cp38'
-          - 'cp39-cp39'
-          - 'cp310-cp310'
-          - 'cp311-cp311'
-          - 'cp312-cp312'
-
     runs-on: ubuntu-latest
     container: quay.io/pypa/manylinux2014_x86_64
-    name: Wheel for Linux (${{ matrix.python }})
+    name: Wheel for Linux
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: 'recursive'
 
-      - name: Avoid issues with Git's solution for CVE-2022-24765 breaking setuptools-scm
-        run: git config --global --add safe.directory $(pwd)
+      - run: /opt/python/cp310-cp310/bin/python -m venv .venv
 
-      - run: /opt/python/${{ matrix.python }}/bin/python -m venv .venv
-     
       - name: Install Python packages
         run: .venv/bin/python -m pip install --upgrade build pip auditwheel
 
@@ -91,20 +72,31 @@ jobs:
         run: |
           .venv/bin/python -m auditwheel repair --plat manylinux2014_x86_64 dist/*-linux_x86_64.whl -w dist
           rm dist/*-linux_x86_64.whl
-      
+
       - name: Store the packages
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v7
         with:
-          name: python-package-distributions
+          name: python-package-distributions-linux
           path: dist
 
-  test:
+  merge-artifacts:
     needs:
       - build
       - linux-build
-      
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: python-package-distributions
+          pattern: python-package-distributions-*
+
+  test:
+    needs:
+      - merge-artifacts
+
     runs-on: ${{ matrix.os.image }}
-    name: ${{ matrix.os.name }} - Test Python ${{ matrix.python.version }}
+    name: ${{ matrix.os.name }} - Test Python ${{ matrix.python }}
     strategy:
       fail-fast: false
       matrix:
@@ -113,23 +105,23 @@ jobs:
           - {name: 'Windows', image: 'windows-latest', wheel: 'win_amd64'}
           - {name: 'Linux', image: 'ubuntu-latest', wheel: 'manylinux2014_x86_64'}
         python:
-          - {version: '3.8', wheel: 'cp38-cp38'}
-          - {version: '3.9', wheel: 'cp39-cp39'}
-          - {version: '3.10', wheel: 'cp310-cp310'}
-          - {version: '3.11', wheel: 'cp311-cp311'}
-          - {version: '3.12', wheel: 'cp312-cp312'}
+          - '3.10'
+          - '3.11'
+          - '3.12'
+          - '3.13'
+          - '3.14'
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
-          python-version: ${{ matrix.python.version }}
+          python-version: ${{ matrix.python }}
 
       - name: Download all the dists
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v8
         with:
           name: python-package-distributions
           path: dist/
@@ -138,7 +130,7 @@ jobs:
         run: python -m pip install --upgrade pip pytest
 
       - name: install built wheel
-        run: python -m pip install dist/*-${{ matrix.python.wheel }}-*${{ matrix.os.wheel }}.whl
+        run: python -m pip install dist/*-abi3-*${{ matrix.os.wheel }}.whl
         shell: bash
 
       - name: test
@@ -152,7 +144,7 @@ jobs:
 
     steps:
       - name: Download all the dists
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v8
         with:
           name: python-package-distributions
           path: dist/
